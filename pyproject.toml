@@ -1,0 +1,17 @@
+[project]
+name = "flavor-bridge-engine"
+version = "0.1.0"
+description = "A Discovery Engine that finds 'chemical cousins' between ingredients using AI and vector embeddings"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "workers-py>=0.0.7"
+]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+
+
