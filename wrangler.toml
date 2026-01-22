@@ -22,3 +22,4 @@ binding = "AI"
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "flavor-bridge-index"
+remote = true  # Use real Vectorize in local dev
