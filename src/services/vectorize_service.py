@@ -97,7 +97,11 @@ class VectorizeService:
         for i, item in enumerate(items):
             vectors.append({
                 "id": str(item["id"]),
-                "values": embeddings[i]
+                "values": embeddings[i],
+                "metadata": {
+                    "name": item["name"],
+                    "description": item["description"]
+                }
             })
         
         await self.upsert(vectors)
