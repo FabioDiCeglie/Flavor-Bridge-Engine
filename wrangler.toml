@@ -12,6 +12,7 @@ compatibility_flags = ["python_workers"]
 # ============================================
 [ai]
 binding = "AI"
+remote = true
 
 # ============================================
 # 🗄️ Vectorize Binding
