@@ -6,7 +6,8 @@ from services import AIService
 async def explain(env, request) -> Response:
     """Explain why ingredients are chemical cousins using AI."""
     try:
-        body = await request.json()
+        text = await request.text()
+        body = json.loads(text)
         query = body.get("query")
         matches = body.get("matches")
 
