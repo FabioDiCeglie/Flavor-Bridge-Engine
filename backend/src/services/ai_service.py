@@ -5,6 +5,8 @@ Responsibilities:
 - LLM text generation
 - Embedding generation
 """
+import js
+from pyodide.ffi import to_js
 
 LLM_MODEL = "@cf/meta/llama-3.1-8b-instruct"
 EMBEDDING_MODEL = "@cf/baai/bge-small-en-v1.5"
@@ -33,9 +35,12 @@ class AIService:
         Returns:
             Generated text response
         """
+        messages = [{"role": "user", "content": prompt}]
+        js_messages = to_js(messages, dict_converter=js.Object.fromEntries)
+        
         response = await self.ai.run(
             LLM_MODEL,
-            messages=[{"role": "user", "content": prompt}],
+            messages=js_messages,
             max_tokens=max_tokens,
         )
         return response.response
