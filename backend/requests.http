@@ -1,0 +1,96 @@
+### ================================================
+### Flavor Bridge Engine - API Requests
+### Use with VS Code REST Client extension
+### ================================================
+
+@baseUrl = http://localhost:8787
+
+
+### ------------------------------------------------
+### Health Check
+### ------------------------------------------------
+
+# @name health
+GET {{baseUrl}}/health
+
+
+### ------------------------------------------------
+### Search - Find chemical cousins
+### ------------------------------------------------
+
+# @name searchMiso
+GET {{baseUrl}}/search?q=Miso
+
+###
+
+# @name searchChocolate
+GET {{baseUrl}}/search?q=Dark Chocolate
+
+###
+
+# @name searchTruffle
+GET {{baseUrl}}/search?q=Truffle
+
+###
+
+# @name searchParmesan
+GET {{baseUrl}}/search?q=Parmesan
+
+
+### ------------------------------------------------
+### Explain - AI reasoning for flavor connections
+### ------------------------------------------------
+
+# @name explainMiso
+POST {{baseUrl}}/explain
+Content-Type: application/json
+
+{
+    "query": "Miso",
+    "matches": [
+        {
+            "name": "Parmesan",
+            "description": "Aged Italian hard cheese rich in glutamates"
+        },
+        {
+            "name": "Soy Sauce", 
+            "description": "Fermented condiment high in glutamic acid"
+        },
+        {
+            "name": "Kombu",
+            "description": "Kelp with highest natural concentration of glutamate"
+        }
+    ]
+}
+
+###
+
+# @name explainChocolate
+POST {{baseUrl}}/explain
+Content-Type: application/json
+
+{
+    "query": "Dark Chocolate",
+    "matches": [
+        {
+            "name": "Coffee",
+            "description": "Roasted seeds with Maillard compounds and bitter notes"
+        },
+        {
+            "name": "Raspberry",
+            "description": "Berry with ketones that pair famously with chocolate"
+        },
+        {
+            "name": "Urfa Biber",
+            "description": "Turkish chile with chocolate and coffee notes"
+        }
+    ]
+}
+
+
+### ------------------------------------------------
+### Seed - Populate vector database (run once)
+### ------------------------------------------------
+
+# @name seed
+POST {{baseUrl}}/seed
