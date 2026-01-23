@@ -9,6 +9,7 @@ async def search(env, request) -> Response:
     try:
         url = js.URL.new(request.url)
         query = url.searchParams.get("q")
+        query_lower = query.lower()
         
         if not query:
             return Response(
@@ -27,7 +28,7 @@ async def search(env, request) -> Response:
         
         results = []
         for match in matches:
-            if match.metadata.name.lower() == query.lower():
+            if match.metadata.name.lower() == query_lower:
                 continue
             result = {
                 "id": match.id,
