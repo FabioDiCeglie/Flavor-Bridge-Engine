@@ -66,7 +66,7 @@ class VectorizeService:
         js_vectors = to_js(vectors, dict_converter=js.Object.fromEntries)
         await self.vectorize.upsert(js_vectors)
     
-    async def query(self, vector: list[float], top_k: int = 5):
+    async def query(self, vector: list[float], top_k: int = 6):
         """
         Query similar vectors.
         
@@ -75,9 +75,9 @@ class VectorizeService:
             top_k: Number of results to return
             
         Returns:
-            List of matches with scores
+            List of matches with scores and metadata
         """
-        results = await self.vectorize.query(vector, topK=top_k)
+        results = await self.vectorize.query(vector, topK=top_k, returnMetadata="all")
         return results.matches
     
     async def embed_and_upsert(self, items: list[dict]) -> int:
