@@ -1,7 +1,7 @@
 import js
 import json
 from workers import Response
-from services import VectorizeService
+from services import AIService, VectorizeService
 
 
 async def search(env, request) -> Response:
@@ -9,22 +9,24 @@ async def search(env, request) -> Response:
     try:
         url = js.URL.new(request.url)
         query = url.searchParams.get("q")
-        query_lower = query.lower()
-        
+
         if not query:
             return Response(
                 json.dumps({"error": "Missing query parameter: ?q=ingredient"}),
                 status=400,
                 headers={"Content-Type": "application/json"},
             )
-        
-        service = VectorizeService(env.AI, env.VECTORIZE)
-        
+
+        query_lower = query.lower()
+
+        ai_service = AIService(env.AI)
+        vectorize_service = VectorizeService(env.VECTORIZE)
+
         # Generate embedding for the query
-        embedding = await service.generate_embedding(query)
-        
+        embedding = await ai_service.embed(query)
+
         # Find similar vectors
-        matches = await service.query(embedding)
+        matches = await vectorize_service.query(embedding)
         
         results = []
         for match in matches:
@@ -42,7 +44,7 @@ async def search(env, request) -> Response:
             json.dumps({"query": query, "matches": results}),
             headers={"Content-Type": "application/json"},
         )
-        
+
     except Exception as e:
         return Response(
             json.dumps({"error": str(e)}),

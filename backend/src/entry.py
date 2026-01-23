@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 from workers import Response, Request
-from routes import health_check, seed, search
+from routes import health_check, seed, search, explain
 
 
 async def on_fetch(request: Request, env) -> Response:
@@ -18,5 +18,8 @@ async def on_fetch(request: Request, env) -> Response:
     # Search for ingredients
     if path == "/search" and method == "GET":
         return await search(env, request)
+
+    if path == "/explain" and method == "POST":
+        return await explain(env, request)
     
     return Response("Not Found", status=404)
