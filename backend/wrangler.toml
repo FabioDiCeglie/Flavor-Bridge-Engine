@@ -6,9 +6,6 @@ compatibility_flags = ["python_workers"]
 
 # ============================================
 # 🧠 Workers AI Binding
-# This gives us access to:
-#   - Text Embeddings (bge-small-en-v1.5)
-#   - LLM Reasoning (llama-3.1-8b-instruct)
 # ============================================
 [ai]
 binding = "AI"
@@ -16,19 +13,45 @@ remote = true
 
 # ============================================
 # 🗄️ Vectorize Binding
-# Our "Pantry" - stores ingredient vectors
-# Dimensions: 384 (matches bge-small-en-v1.5)
-# Metric: cosine (for semantic similarity)
 # ============================================
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "flavor-bridge-index"
-remote = true  # Use real Vectorize in local dev
+remote = true
 
 # ============================================
 # 📊 Observability
-# Logging configuration for monitoring
 # ============================================
 [observability.logs]
 enabled = false
 invocation_logs = true
+
+# ============================================
+# 🚧 STAGING Environment
+# Deploy: npx wrangler deploy --env staging
+# URL: flavor-bridge-engine-staging.*.workers.dev
+# ============================================
+[env.staging]
+name = "flavor-bridge-engine-staging"
+
+[env.staging.ai]
+binding = "AI"
+
+[[env.staging.vectorize]]
+binding = "VECTORIZE"
+index_name = "flavor-bridge-index"
+
+# ============================================
+# 🚀 PRODUCTION Environment
+# Deploy: npx wrangler deploy --env production
+# URL: flavor-bridge-engine.*.workers.dev
+# ============================================
+[env.production]
+name = "flavor-bridge-engine"
+
+[env.production.ai]
+binding = "AI"
+
+[[env.production.vectorize]]
+binding = "VECTORIZE"
+index_name = "flavor-bridge-index"
