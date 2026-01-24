@@ -84,7 +84,8 @@ async def test_explain(client: httpx.AsyncClient) -> bool:
 
 async def run_tests():
     """Run all tests."""
-    print("\n🧪 Flavor Bridge Engine - API Tests\n")
+    print("\n🧪 Flavor Bridge Engine - API Tests")
+    print(f"   Target: {BASE_URL}\n")
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Check if server is running
