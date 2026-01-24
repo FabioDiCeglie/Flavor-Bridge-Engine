@@ -24,3 +24,11 @@ remote = true
 binding = "VECTORIZE"
 index_name = "flavor-bridge-index"
 remote = true  # Use real Vectorize in local dev
+
+# ============================================
+# 📊 Observability
+# Logging configuration for monitoring
+# ============================================
+[observability.logs]
+enabled = false
+invocation_logs = true
