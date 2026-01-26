@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 from workers import Response, Request
 from routes import health_check, seed, search, explain, docs, openapi_json
+from utils import check_rate_limit
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -27,7 +28,6 @@ async def on_fetch(request: Request, env) -> Response:
     # Documentation
     if path == "/docs":
         return with_cors(await docs())
-    
     if path == "/openapi.json":
         return with_cors(await openapi_json())
     
@@ -39,12 +39,16 @@ async def on_fetch(request: Request, env) -> Response:
     if path == "/seed" and method == "POST":
         return with_cors(await seed(env))
     
-    # Search for ingredients
+    # Search for ingredients (rate limited)
     if path == "/search" and method == "GET":
+        if blocked := await check_rate_limit(env, request):
+            return with_cors(blocked)
         return with_cors(await search(env, request))
 
-    # Explain flavor bridges
+    # Explain flavor bridges (rate limited)
     if path == "/explain" and method == "POST":
+        if blocked := await check_rate_limit(env, request):
+            return with_cors(blocked)
         return with_cors(await explain(env, request))
     
     return with_cors(Response("Not Found", status=404))

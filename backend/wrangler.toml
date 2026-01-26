@@ -20,6 +20,13 @@ index_name = "flavor-bridge-index"
 remote = true
 
 # ============================================
+# 🚦 Rate Limiting (KV)
+# ============================================
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "92f68f46211c4dab8b3328f84fbf4dbc"
+
+# ============================================
 # 📊 Observability
 # ============================================
 [observability.logs]
@@ -41,6 +48,14 @@ binding = "AI"
 binding = "VECTORIZE"
 index_name = "flavor-bridge-index"
 
+[[env.staging.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "92f68f46211c4dab8b3328f84fbf4dbc"
+
+[env.staging.observability.logs]
+enabled = false
+invocation_logs = true
+
 # ============================================
 # 🚀 PRODUCTION Environment
 # Deploy: npx wrangler deploy --env production
@@ -55,3 +70,11 @@ binding = "AI"
 [[env.production.vectorize]]
 binding = "VECTORIZE"
 index_name = "flavor-bridge-index"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "92f68f46211c4dab8b3328f84fbf4dbc"
+
+[env.production.observability.logs]
+enabled = false
+invocation_logs = true

@@ -82,6 +82,30 @@ async def test_explain(client: httpx.AsyncClient) -> bool:
         return False
 
 
+async def test_rate_limit(client: httpx.AsyncClient) -> bool:
+    """Test rate limiting returns 429 after too many requests."""
+    try:
+        # Make 15 requests - should hit the limit (10/min)
+        responses = []
+        for _ in range(15):
+            response = await client.get(f"{BASE_URL}/search", params={"q": "RateLimitTest"})
+            responses.append(response.status_code)
+        
+        # Should have some 200s and some 429s
+        count_200 = responses.count(200)
+        count_429 = responses.count(429)
+        
+        assert count_429 > 0, "Expected at least one 429 response"
+        assert count_200 > 0, "Expected at least one 200 response"
+        
+        log_pass("Rate limiting returns 429 after limit exceeded")
+        print(f"       → {count_200} allowed, {count_429} blocked (previous tests used some quota)")
+        return True
+    except Exception as e:
+        log_fail("Rate limiting returns 429 after limit exceeded", str(e))
+        return False
+
+
 async def run_tests():
     """Run all tests."""
     print("\n🧪 Flavor Bridge Engine - API Tests")
@@ -100,6 +124,7 @@ async def run_tests():
             await test_health(client),
             await test_search(client),
             await test_explain(client),
+            await test_rate_limit(client),
         ]
 
         # Summary
