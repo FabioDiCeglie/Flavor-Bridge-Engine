@@ -2,31 +2,49 @@ from urllib.parse import urlparse
 from workers import Response, Request
 from routes import health_check, seed, search, explain, docs, openapi_json
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+}
+
+
+def with_cors(response: Response) -> Response:
+    """Add CORS headers to a response."""
+    headers = dict(response.headers) if response.headers else {}
+    headers.update(CORS_HEADERS)
+    return Response(response.body, status=response.status, headers=headers)
+
 
 async def on_fetch(request: Request, env) -> Response:
     path = urlparse(request.url).path
     method = request.method
     
+    # CORS preflight
+    if method == "OPTIONS":
+        return Response("", status=204, headers=CORS_HEADERS)
+    
     # Documentation
     if path == "/docs":
-        return await docs()
+        return with_cors(await docs())
     
     if path == "/openapi.json":
-        return await openapi_json()
+        return with_cors(await openapi_json())
     
     # Health check
     if path == "/health":
-        return await health_check()
+        return with_cors(await health_check())
     
-    # Seed database (POST only)
+    # Seed database
     if path == "/seed" and method == "POST":
-        return await seed(env)
+        return with_cors(await seed(env))
     
     # Search for ingredients
     if path == "/search" and method == "GET":
-        return await search(env, request)
+        return with_cors(await search(env, request))
 
+    # Explain flavor bridges
     if path == "/explain" and method == "POST":
-        return await explain(env, request)
+        return with_cors(await explain(env, request))
     
-    return Response("Not Found", status=404)
+    return with_cors(Response("Not Found", status=404))
