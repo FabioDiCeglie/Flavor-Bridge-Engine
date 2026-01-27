@@ -1,6 +1,7 @@
 import json
+import hashlib
 from workers import Response
-from services import AIService
+from services import AIService, CacheService
 from prompts import build_explain_prompt
 
 
@@ -19,14 +20,32 @@ async def explain(env, request) -> Response:
                 headers={"Content-Type": "application/json"},
             )
 
+        # Create hash from match names only for cache key
+        match_names = ",".join(sorted(m["name"].lower() for m in matches))
+        matches_hash = hashlib.md5(match_names.encode()).hexdigest()[:8]
+
+        # Check cache first
+        cache_service = CacheService(env.CACHE)
+        cached = await cache_service.get_explain(query, matches_hash)
+        if cached:
+            return Response(
+                json.dumps(cached),
+                headers={"Content-Type": "application/json", "X-Cache": "HIT"},
+            )
+
         prompt = build_explain_prompt(query, matches)
 
         service = AIService(env.AI)
         explanation = await service.generate(prompt)
 
+        response_data = {"query": query, "explanation": explanation}
+
+        # Cache the result (24 hour TTL)
+        await cache_service.set_explain(query, matches_hash, response_data)
+
         return Response(
-            json.dumps({"query": query, "explanation": explanation}),
-            headers={"Content-Type": "application/json"},
+            json.dumps(response_data),
+            headers={"Content-Type": "application/json", "X-Cache": "MISS"},
         )
 
     except Exception as e:

@@ -8,6 +8,7 @@ import asyncio
 import httpx
 import os
 import sys
+import time
 
 BASE_URL = os.environ.get("API_URL", "http://localhost:8787")
 
@@ -82,13 +83,77 @@ async def test_explain(client: httpx.AsyncClient) -> bool:
         return False
 
 
+async def test_search_cache(client: httpx.AsyncClient) -> bool:
+    """Test search caching returns X-Cache: HIT on second request."""
+    try:
+        # First request - should be MISS
+        start1 = time.time()
+        response1 = await client.get(f"{BASE_URL}/search", params={"q": "Tomato"})
+        time1 = time.time() - start1
+        assert response1.status_code == 200, f"Expected 200, got {response1.status_code}"
+        cache1 = response1.headers.get("x-cache", "").upper()
+        
+        # Second request - should be HIT
+        start2 = time.time()
+        response2 = await client.get(f"{BASE_URL}/search", params={"q": "Tomato"})
+        time2 = time.time() - start2
+        assert response2.status_code == 200, f"Expected 200, got {response2.status_code}"
+        cache2 = response2.headers.get("x-cache", "").upper()
+        
+        assert cache2 == "HIT", f"Expected X-Cache: HIT, got {cache2}"
+        
+        saved = time1 - time2
+        log_pass("Search caching returns X-Cache: HIT")
+        print(f"       → 1st: {cache1} ({time1:.2f}s), 2nd: {cache2} ({time2:.2f}s), saved: {saved:.2f}s")
+        return True
+    except Exception as e:
+        log_fail("Search caching returns X-Cache: HIT", str(e))
+        return False
+
+
+async def test_explain_cache(client: httpx.AsyncClient) -> bool:
+    """Test explain caching returns X-Cache: HIT on second request."""
+    try:
+        payload = {
+            "query": "Garlic",
+            "matches": [
+                {"name": "Onion", "description": "Aromatic allium."},
+                {"name": "Shallot", "description": "Mild onion flavor."},
+            ]
+        }
+        
+        # First request - should be MISS
+        start1 = time.time()
+        response1 = await client.post(f"{BASE_URL}/explain", json=payload)
+        time1 = time.time() - start1
+        assert response1.status_code == 200, f"Expected 200, got {response1.status_code}"
+        cache1 = response1.headers.get("x-cache", "").upper()
+        
+        # Second request - should be HIT
+        start2 = time.time()
+        response2 = await client.post(f"{BASE_URL}/explain", json=payload)
+        time2 = time.time() - start2
+        assert response2.status_code == 200, f"Expected 200, got {response2.status_code}"
+        cache2 = response2.headers.get("x-cache", "").upper()
+        
+        assert cache2 == "HIT", f"Expected X-Cache: HIT, got {cache2}"
+        
+        saved = time1 - time2
+        log_pass("Explain caching returns X-Cache: HIT")
+        print(f"       → 1st: {cache1} ({time1:.2f}s), 2nd: {cache2} ({time2:.2f}s), saved: {saved:.2f}s")
+        return True
+    except Exception as e:
+        log_fail("Explain caching returns X-Cache: HIT", str(e))
+        return False
+
+
 async def test_rate_limit(client: httpx.AsyncClient) -> bool:
     """Test rate limiting returns 429 after too many requests."""
     try:
         # Make 15 requests - should hit the limit (10/min)
         responses = []
         for _ in range(15):
-            response = await client.get(f"{BASE_URL}/search", params={"q": "RateLimitTest"})
+            response = await client.get(f"{BASE_URL}/search", params={"q": "Parmesan"})
             responses.append(response.status_code)
         
         # Should have some 200s and some 429s
@@ -123,7 +188,9 @@ async def run_tests():
         results = [
             await test_health(client),
             await test_search(client),
+            await test_search_cache(client),
             await test_explain(client),
+            await test_explain_cache(client),
             await test_rate_limit(client),
         ]
 
