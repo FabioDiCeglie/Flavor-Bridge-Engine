@@ -27,6 +27,13 @@ binding = "RATE_LIMIT"
 id = "92f68f46211c4dab8b3328f84fbf4dbc"
 
 # ============================================
+# 💾 Response Cache (KV)
+# ============================================
+[[kv_namespaces]]
+binding = "CACHE"
+id = "3cb20d2378d54435879058ee1825c4fc"
+
+# ============================================
 # 📊 Observability
 # ============================================
 [observability.logs]
@@ -52,6 +59,10 @@ index_name = "flavor-bridge-index"
 binding = "RATE_LIMIT"
 id = "92f68f46211c4dab8b3328f84fbf4dbc"
 
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "3cb20d2378d54435879058ee1825c4fc"
+
 [env.staging.observability.logs]
 enabled = false
 invocation_logs = true
@@ -74,6 +85,10 @@ index_name = "flavor-bridge-index"
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "92f68f46211c4dab8b3328f84fbf4dbc"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "3cb20d2378d54435879058ee1825c4fc"
 
 [env.production.observability.logs]
 enabled = false

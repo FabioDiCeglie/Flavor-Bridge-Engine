@@ -1,7 +1,7 @@
 import js
 import json
 from workers import Response
-from services import AIService, VectorizeService
+from services import AIService, VectorizeService, CacheService
 
 
 async def search(env, request) -> Response:
@@ -19,6 +19,15 @@ async def search(env, request) -> Response:
 
         query_lower = query.lower()
 
+        # Check cache first
+        cache_service = CacheService(env.CACHE)
+        cached = await cache_service.get_search(query)
+        if cached:
+            return Response(
+                json.dumps(cached),
+                headers={"Content-Type": "application/json", "X-Cache": "HIT"},
+            )
+
         ai_service = AIService(env.AI)
         vectorize_service = VectorizeService(env.VECTORIZE)
 
@@ -27,7 +36,7 @@ async def search(env, request) -> Response:
 
         # Find similar vectors
         matches = await vectorize_service.query(embedding)
-        
+
         results = []
         for match in matches:
             if match.metadata.name.lower() == query_lower:
@@ -40,9 +49,14 @@ async def search(env, request) -> Response:
             }
             results.append(result)
 
+        response_data = {"query": query, "matches": results}
+
+        # Cache the results
+        await cache_service.set_search(query, response_data)
+
         return Response(
-            json.dumps({"query": query, "matches": results}),
-            headers={"Content-Type": "application/json"},
+            json.dumps(response_data),
+            headers={"Content-Type": "application/json", "X-Cache": "MISS"},
         )
 
     except Exception as e:
