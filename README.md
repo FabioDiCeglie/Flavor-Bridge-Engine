@@ -44,6 +44,7 @@ Why do Miso and Parmesan taste similar? Both are fermented foods rich in **gluta
 - **Runtime**: Cloudflare Workers (Python)
 - **AI**: Workers AI (bge-small-en-v1.5 + llama-3.1-8b)
 - **Vector DB**: Cloudflare Vectorize
+- **Rate Limiting**: Cloudflare KV (10 req/min per IP)
 - **CI/CD**: GitHub Actions (staging → tests → production)
 
 ## 📁 Project Structure
@@ -54,6 +55,7 @@ backend/
 │   ├── routes/           # HTTP handlers
 │   ├── services/         # AI + Vectorize logic
 │   ├── prompts/          # LLM prompts
+│   ├── utils/rate_limit  # Rate limiting
 │   └── data/             # 200 ingredients
 ├── tests/e2e/            # Integration tests
 └── wrangler.toml         # Cloudflare config
@@ -82,12 +84,13 @@ Push to `main` triggers an automated deployment flow:
                  └───────────┬────────────┘
                              │
                              ▼
-                 ┌────────────────────────┐
-                 │   🧪 E2E Tests         │
-                 │   • Health check       │
-                 │   • Search API         │
-                 │   • AI Explanations    │
-                 └───────────┬────────────┘
+                ┌────────────────────────┐
+                │   🧪 E2E Tests         │
+                │   • Health check       │
+                │   • Search API         │
+                │   • AI Explanations    │
+                │   • Rate Limiting      │
+                └───────────┬────────────┘
                              │
                       ✅ all pass?
                              │
