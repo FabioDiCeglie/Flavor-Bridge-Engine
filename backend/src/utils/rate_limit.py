@@ -23,9 +23,7 @@ async def check_rate_limit(env, request: Request) -> Response | None:
             headers={"Content-Type": "application/json", "Retry-After": str(RATE_WINDOW)},
         )
     
-    # Increment counter (only set TTL on first request)
-    if count:
-        await env.RATE_LIMIT.put(key, str(int(count) + 1))
-    else:
-        await env.RATE_LIMIT.put(key, "1", expiration_ttl=RATE_WINDOW)
+    # Increment counter (always set TTL to maintain expiration)
+    new_count = int(count) + 1 if count else 1
+    await env.RATE_LIMIT.put(key, str(new_count), expiration_ttl=RATE_WINDOW)
     return None
