@@ -27,6 +27,19 @@ Why do Miso and Parmesan taste similar? Both are fermented foods rich in **gluta
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## ⚡ Performance
+
+Responses are cached in Cloudflare KV to reduce latency and AI costs:
+
+| Endpoint | Cache TTL | Typical Response |
+|----------|-----------|------------------|
+| `/search` | 1 hour | MISS: ~200ms, HIT: ~10ms |
+| `/explain` | 24 hours | MISS: ~2s, HIT: ~10ms |
+
+Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
+
+---
+
 **How it works:**
 1. Each ingredient description → 384-dimensional vector
 2. Query vectors compared using cosine similarity  
@@ -104,17 +117,6 @@ Push to `main` triggers an automated deployment flow:
 ```
 
 **Zero-downtime**: Production only updates if staging tests pass.
-
-## ⚡ Performance
-
-Responses are cached in Cloudflare KV to reduce latency and AI costs:
-
-| Endpoint | Cache TTL | Typical Response |
-|----------|-----------|------------------|
-| `/search` | 1 hour | MISS: ~200ms, HIT: ~10ms |
-| `/explain` | 24 hours | MISS: ~2s, HIT: ~10ms |
-
-Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
 
 ---
 
