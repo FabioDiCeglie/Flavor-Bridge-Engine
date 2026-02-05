@@ -11,13 +11,14 @@ def build_explain_prompt(query: str, matches: list[dict]) -> str:
 
     Args:
         query: The ingredient being searched
-        matches: List of similar ingredients with name and description
+        matches: List of similar ingredients with name, description, and optionally compounds
 
     Returns:
         Formatted prompt string for the LLM
     """
     matches_context = "\n".join(
         f"- {m['name']}: {m['description']}"
+        + (f" Compounds: {m['compounds']}" if m.get("compounds") else "")
         for m in matches[:3]
     )
 

@@ -40,7 +40,7 @@ async def test_health(client: httpx.AsyncClient) -> bool:
 
 
 async def test_search(client: httpx.AsyncClient) -> bool:
-    """Test GET /search?q=Miso returns matches."""
+    """Test GET /search?q=Miso returns matches with id, score, name, description, compounds."""
     try:
         response = await client.get(f"{BASE_URL}/search", params={"q": "Miso"})
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -48,8 +48,12 @@ async def test_search(client: httpx.AsyncClient) -> bool:
         assert data["query"] == "Miso"
         assert isinstance(data["matches"], list)
         assert len(data["matches"]) > 0, "Expected at least one match"
-        log_pass("GET /search?q=Miso returns matches")
-        # Show top 3 matches
+        for m in data["matches"]:
+            assert "id" in m and "score" in m and "name" in m and "description" in m and "compounds" in m
+        # Query ingredient is excluded from matches
+        names = [m["name"].lower() for m in data["matches"]]
+        assert "miso" not in names, "Query ingredient should not appear in matches"
+        log_pass("GET /search?q=Miso returns matches (with compounds)")
         for m in data["matches"][:3]:
             print(f"       → {m['name']} (score: {m['score']:.2f})")
         return True
@@ -58,14 +62,31 @@ async def test_search(client: httpx.AsyncClient) -> bool:
         return False
 
 
+async def test_search_unknown_ingredient(client: httpx.AsyncClient) -> bool:
+    """Test GET /search?q=NotAnIngredient returns 404."""
+    try:
+        response = await client.get(f"{BASE_URL}/search", params={"q": "NotAnIngredientXYZ"})
+        assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+        data = response.json()
+        assert data.get("error") == "Ingredient not found"
+        assert data.get("query") == "NotAnIngredientXYZ"
+        assert "message" in data
+        log_pass("GET /search unknown ingredient returns 404")
+        return True
+    except Exception as e:
+        log_fail("GET /search unknown ingredient returns 404", str(e))
+        return False
+
+
 async def test_explain(client: httpx.AsyncClient) -> bool:
     """Test POST /explain returns AI explanation."""
     try:
         payload = {
-            "query": "Miso",
+            "query": "Ginseng",
             "matches": [
-                {"name": "Soy Sauce", "description": "Fermented soybean condiment."},
-                {"name": "Parmesan", "description": "Aged cheese rich in glutamates."},
+                {"id": "625", "score": 0.81833684, "name": "Pepper (C. chinense)", "description": "Capsicum chinense, is a species of chili pepper native to the Americas. C. chinense varieties are well known for their exceptional heat and unique flavors. C. chinense is native to Central America, the Yucatan region, and the Caribbean islands. Despite its name, C. chinense or \"Chinese capsicum\" is misleading. All Capsicum species originated in the New World. Nikolaus Joseph von Jacquin (1727\u20131817), a Dutch botanist, erroneously named the species in 1776, because he believed they originated in", "compounds": "(+)-7-iso-jasmonate, (+)-cis-abscisic aldehyde, (+)-lariciresinol, (+)-marmesin, (+)-Neomenthol, (+)-Pinoresinol, (+)-pulegone, (+)-Secoisolariciresinol, (+)-taxifolin, (-)-jasmonoyl-L-isoleucine, (-)-lactol, (-)-Lariciresinol, (-)-Maackiain, (-)-maackiain-3-O-glucoside, (-)-Matairesinol, (-)-medicarpin, (-)-medicarpin-3-O-glucoside, (-)-Menthone, (-)-phaseollidin, (-)-Pinoresinol"},
+                {"id": "627", "score": 0.8169661, "name": "Pepper (C. pubescens)", "description": "Capsicum pubescens is a species of the genus Capsicum (pepper), which is found primarily in Central and South America. The plants, but especially the fruits, are often referred to as \"rocoto\":http://en.wikipedia.org/wiki/Rocoto and locoto. As they reach a relatively advanced age and the roots lignify quickly, sometimes the familiar name is tree chili. Of all the domesticated species of peppers, this is the least widespread and systematically furthest away from all others. [Wikipedia] See a \"l", "compounds": "(+)-7-iso-jasmonate, (+)-cis-abscisic aldehyde, (+)-lariciresinol, (+)-marmesin, (+)-Neomenthol, (+)-Pinoresinol, (+)-pulegone, (+)-Secoisolariciresinol, (+)-taxifolin, (-)-jasmonoyl-L-isoleucine, (-)-lactol, (-)-Lariciresinol, (-)-Maackiain, (-)-maackiain-3-O-glucoside, (-)-Matairesinol, (-)-medicarpin, (-)-medicarpin-3-O-glucoside, (-)-Menthone, (-)-phaseollidin, (-)-Pinoresinol"},
+
             ]
         }
         response = await client.post(f"{BASE_URL}/explain", json=payload)
@@ -88,14 +109,14 @@ async def test_search_cache(client: httpx.AsyncClient) -> bool:
     try:
         # First request - should be MISS
         start1 = time.time()
-        response1 = await client.get(f"{BASE_URL}/search", params={"q": "Tomato"})
+        response1 = await client.get(f"{BASE_URL}/search", params={"q": "Cherry tomato"})
         time1 = time.time() - start1
         assert response1.status_code == 200, f"Expected 200, got {response1.status_code}"
         cache1 = response1.headers.get("x-cache", "").upper()
         
         # Second request - should be HIT
         start2 = time.time()
-        response2 = await client.get(f"{BASE_URL}/search", params={"q": "Tomato"})
+        response2 = await client.get(f"{BASE_URL}/search", params={"q": "Cherry tomato"})
         time2 = time.time() - start2
         assert response2.status_code == 200, f"Expected 200, got {response2.status_code}"
         cache2 = response2.headers.get("x-cache", "").upper()
@@ -115,10 +136,11 @@ async def test_explain_cache(client: httpx.AsyncClient) -> bool:
     """Test explain caching returns X-Cache: HIT on second request."""
     try:
         payload = {
-            "query": "Garlic",
+            "query": "Ginseng",
             "matches": [
-                {"name": "Onion", "description": "Aromatic allium."},
-                {"name": "Shallot", "description": "Mild onion flavor."},
+                {"id": "625", "score": 0.81833684, "name": "Pepper (C. chinense)", "description": "Capsicum chinense, is a species of chili pepper native to the Americas. C. chinense varieties are well known for their exceptional heat and unique flavors. C. chinense is native to Central America, the Yucatan region, and the Caribbean islands. Despite its name, C. chinense or \"Chinese capsicum\" is misleading. All Capsicum species originated in the New World. Nikolaus Joseph von Jacquin (1727\u20131817), a Dutch botanist, erroneously named the species in 1776, because he believed they originated in", "compounds": "(+)-7-iso-jasmonate, (+)-cis-abscisic aldehyde, (+)-lariciresinol, (+)-marmesin, (+)-Neomenthol, (+)-Pinoresinol, (+)-pulegone, (+)-Secoisolariciresinol, (+)-taxifolin, (-)-jasmonoyl-L-isoleucine, (-)-lactol, (-)-Lariciresinol, (-)-Maackiain, (-)-maackiain-3-O-glucoside, (-)-Matairesinol, (-)-medicarpin, (-)-medicarpin-3-O-glucoside, (-)-Menthone, (-)-phaseollidin, (-)-Pinoresinol"},
+                {"id": "627", "score": 0.8169661, "name": "Pepper (C. pubescens)", "description": "Capsicum pubescens is a species of the genus Capsicum (pepper), which is found primarily in Central and South America. The plants, but especially the fruits, are often referred to as \"rocoto\":http://en.wikipedia.org/wiki/Rocoto and locoto. As they reach a relatively advanced age and the roots lignify quickly, sometimes the familiar name is tree chili. Of all the domesticated species of peppers, this is the least widespread and systematically furthest away from all others. [Wikipedia] See a \"l", "compounds": "(+)-7-iso-jasmonate, (+)-cis-abscisic aldehyde, (+)-lariciresinol, (+)-marmesin, (+)-Neomenthol, (+)-Pinoresinol, (+)-pulegone, (+)-Secoisolariciresinol, (+)-taxifolin, (-)-jasmonoyl-L-isoleucine, (-)-lactol, (-)-Lariciresinol, (-)-Maackiain, (-)-maackiain-3-O-glucoside, (-)-Matairesinol, (-)-medicarpin, (-)-medicarpin-3-O-glucoside, (-)-Menthone, (-)-phaseollidin, (-)-Pinoresinol"},
+
             ]
         }
         
@@ -148,12 +170,12 @@ async def test_explain_cache(client: httpx.AsyncClient) -> bool:
 
 
 async def test_rate_limit(client: httpx.AsyncClient) -> bool:
-    """Test rate limiting returns 429 after too many requests."""
+    """Test rate limiting returns 429 after too many requests)."""
     try:
         # Make 15 requests - should hit the limit (10/min)
         responses = []
         for _ in range(15):
-            response = await client.get(f"{BASE_URL}/search", params={"q": "Parmesan"})
+            response = await client.get(f"{BASE_URL}/search", params={"q": "Parmesan cheese"})
             responses.append(response.status_code)
         
         # Should have some 200s and some 429s
@@ -188,6 +210,7 @@ async def run_tests():
         results = [
             await test_health(client),
             await test_search(client),
+            await test_search_unknown_ingredient(client),
             await test_search_cache(client),
             await test_explain(client),
             await test_explain_cache(client),
