@@ -41,9 +41,9 @@ Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
 ---
 
 **How it works:**
-1. Each ingredient description → 384-dimensional vector
-2. Query vectors compared using cosine similarity  
-3. LLM explains *why* ingredients are related
+1. Each ingredient is embedded as **name + compounds** (FooDB Database chemistry) → 384-dimensional vector
+2. Query vector is compared to index via cosine similarity; matches exclude the query ingredient
+3. LLM explains *why* ingredients are related (using compound data in the prompt)
 
 ## 🚀 Live Demo
 
@@ -66,12 +66,12 @@ Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
 ```
 backend/
 ├── src/
-│   ├── routes/           # HTTP handlers
-│   ├── services/         # AI, Vectorize, Cache logic
-│   ├── prompts/          # LLM prompts
-│   ├── utils/            # Rate limiting
-│   └── data/             # 200 ingredients
-├── tests/e2e/            # Integration tests
+│   ├── routes/           # HTTP handlers (search, explain, seed, health, docs)
+│   ├── services/         # AI, Vectorize, Cache, Ingredient lookup
+│   ├── prompts/          # LLM prompts (explain uses compounds)
+│   ├── utils/            # Rate limiting, helpers (name+compounds formatting)
+│   └── data/             # ~945 ingredients from FooDB (name, description, compounds)
+├── tests/e2e/            # Integration tests (health, search, 404, cache, explain, rate limit)
 └── wrangler.toml         # Cloudflare config
 ```
 
