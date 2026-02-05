@@ -29,7 +29,7 @@ class CacheService:
     async def set_search(self, query: str, results: dict) -> None:
         """Cache search results."""
         key = self._make_key("search", query)
-        await self.kv.put(key, json.dumps(results), expiration_ttl=self.SEARCH_TTL)
+        await self.kv.put(key, json.dumps(results), expirationTtl=self.SEARCH_TTL)
 
     async def get_explain(self, query: str, matches_hash: str) -> dict | None:
         """Get cached explanation."""
@@ -42,4 +42,4 @@ class CacheService:
     async def set_explain(self, query: str, matches_hash: str, result: dict) -> None:
         """Cache explanation."""
         key = self._make_key("explain", f"{query}:{matches_hash}")
-        await self.kv.put(key, json.dumps(result), expiration_ttl=self.EXPLAIN_TTL)
+        await self.kv.put(key, json.dumps(result), expirationTtl=self.EXPLAIN_TTL)
