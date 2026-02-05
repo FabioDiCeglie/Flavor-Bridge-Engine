@@ -8,6 +8,8 @@ Responsibilities:
 import js
 from pyodide.ffi import to_js
 
+from utils.helpers import format_ingredient_for_embedding, format_compounds
+
 
 class VectorizeService:
     """Service layer for Vectorize operations."""
@@ -47,7 +49,7 @@ class VectorizeService:
         results = await self.vectorize.query(vector, topK=top_k, returnMetadata="all")
         return results.matches
 
-    async def embed_and_upsert(self, items: list[dict]) -> int:
+    async def embed_and_upsert(self, items: list[dict], start_id: int = 0) -> int:
         """
         Embed descriptions and upsert (convenience method).
 
@@ -62,16 +64,18 @@ class VectorizeService:
         if not self.ai_service:
             raise ValueError("AIService required for embed_and_upsert")
 
-        texts = [item["description"] for item in items]
+        # Embed name + compounds for chemical similarity matching
+        texts = [format_ingredient_for_embedding(item) for item in items]
         embeddings = await self.ai_service.embed_batch(texts)
 
         vectors = [
             {
-                "id": str(item["id"]),
+                "id": str(start_id + i + 1),
                 "values": embeddings[i],
                 "metadata": {
                     "name": item["name"],
                     "description": item["description"],
+                    "compounds": format_compounds(item),
                 },
             }
             for i, item in enumerate(items)
