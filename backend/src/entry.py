@@ -37,7 +37,7 @@ async def on_fetch(request: Request, env) -> Response:
     
     # Seed database
     if path == "/seed" and method == "POST":
-        return with_cors(await seed(env))
+        return with_cors(await seed(env, request))
     
     # Search for ingredients (rate limited)
     if path == "/search" and method == "GET":
