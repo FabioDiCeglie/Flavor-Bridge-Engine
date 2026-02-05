@@ -1,7 +1,7 @@
 import js
 import json
 from workers import Response
-from services import AIService, VectorizeService, CacheService
+from services import AIService, VectorizeService, CacheService, IngredientService
 
 
 async def search(env, request) -> Response:
@@ -28,11 +28,23 @@ async def search(env, request) -> Response:
                 headers={"Content-Type": "application/json", "X-Cache": "HIT"},
             )
 
+        ingredient_service = IngredientService()
+        if not ingredient_service.exists(query):
+            return Response(
+                json.dumps({
+                    "error": "Ingredient not found",
+                    "query": query,
+                    "message": "We don't have that ingredient in our database. Try another ingredient.",
+                }),
+                status=404,
+                headers={"Content-Type": "application/json"},
+            )
+
         ai_service = AIService(env.AI)
         vectorize_service = VectorizeService(env.VECTORIZE)
 
-        # Generate embedding for the query
-        embedding = await ai_service.embed(query)
+        query_text = ingredient_service.get_query_text_for_embedding(query)
+        embedding = await ai_service.embed(query_text)
 
         # Find similar vectors
         matches = await vectorize_service.query(embedding)
@@ -46,6 +58,7 @@ async def search(env, request) -> Response:
                 "score": match.score,
                 "name": match.metadata.name,
                 "description": match.metadata.description,
+                "compounds": match.metadata.compounds,
             }
             results.append(result)
 
