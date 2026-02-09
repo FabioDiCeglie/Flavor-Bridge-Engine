@@ -30,7 +30,7 @@ export default function FlavorSearch() {
   const [explainLoading, setExplainLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResponse | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function FlavorSearch() {
           : e.status === 429
             ? "Slow down — try again in a minute."
             : e.message || "Something went wrong. Try again.";
-      setToast(message);
+      setToastMessage(message);
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function FlavorSearch() {
       const data = await explainFlavorBridge(searchResult.query, searchResult.matches);
       setExplanation(data.explanation);
     } catch {
-      setToast("Couldn't load this time. Try again!");
+      setToastMessage("Couldn't load this time. Try again!");
     } finally {
       setExplainLoading(false);
     }
@@ -198,7 +198,7 @@ export default function FlavorSearch() {
         variant="row"
       />
 
-      {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
+      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
     </div>
   );
 }
