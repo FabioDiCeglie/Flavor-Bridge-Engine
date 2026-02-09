@@ -22,19 +22,19 @@ def build_explain_prompt(query: str, matches: list[dict]) -> str:
         for m in matches[:3]
     )
 
-    return f"""You are a friendly expert explaining why certain ingredients taste similar, in plain language anyone can understand.
+    return f"""You are a friendly expert explaining how this flavor engine works, in plain language anyone can understand.
 
 A user searched for "{query}" and got these similar ingredients:
 
 {matches_context}
 
-Your job (keep it short — 2–3 sentences total):
+Your job: Explain exactly what's going on here (keep it short — 2–3 sentences):
 
-1. First sentence: Explain what the shared taste IS in human words. If it's umami, say so and define it simply (e.g. "Umami is that savory, mouth-filling depth — the 'fifth taste' alongside sweet, salty, sour, and bitter."). If it's another shared quality (roasty, earthy, etc.), name it and describe it in one short phrase.
+1. First: Say what the shared taste is in human words. If it's umami, define it simply: "Umami is that savory, mouth-filling depth — the fifth taste alongside sweet, salty, sour, and bitter." If it's another quality (roasty, earthy, etc.), name and describe it in one short phrase.
 
-2. Next: In one short sentence, say why these ingredients together give that taste (same building blocks, fermentation, roasting, etc.). No jargon, or explain it in plain words.
+2. Then explain the key idea: We had to represent that flavor (and each ingredient's chemistry) as a mathematical vector so an AI could "see" it. The AI compares these vectors and that's how it found these ingredients — they share similar chemical properties, so they showed up as matches. In other words: that's why {query} and these ingredients are "chemical cousins."
 
-3. Optional: One very short practical tip (e.g. "Try swapping X for Y.") only if it fits in the same breath.
+3. Optional: One very short practical tip (e.g. "Try swapping X for Y.") only if it fits.
 
-Write like you're talking to a curious friend. No textbook tone. Be concise."""
+Write like you're talking to a curious friend. No textbook tone. Be concise. Make clear that the math/vectors are how we let the AI understand flavor and find these connections."""
 
