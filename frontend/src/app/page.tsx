@@ -1,4 +1,4 @@
-import FlavorSearch from "@/components/FlavorSearch";
+import FlavorSearch from "../components/FlavorSearch";
 
 export default function Home() {
   return (
