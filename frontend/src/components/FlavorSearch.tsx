@@ -6,8 +6,9 @@ import {
   explainFlavorBridge,
   type SearchMatch,
   type SearchResponse,
-  type SearchError,
-} from "@/lib/api";
+} from "../lib/api";
+import SuggestionBubbles from "./SuggestionBubbles";
+import Toast from "./Toast";
 
 const GREEN = "#1db954";
 
@@ -22,31 +23,19 @@ const SUGGESTIONS = [
   "Cherry tomato",
 ];
 
-// Desktop only: scattered around the chat card
-const BUBBLE_POSITIONS = [
-  { left: "-5.5rem", top: "8%" },
-  { right: "-4rem", top: "22%" },
-  { left: "-5rem", top: "45%" },
-  { right: "-3.5rem", top: "58%" },
-  { left: "-5.5rem", top: "68%" },
-  { right: "-4rem", top: "35%" },
-  { left: "50%", top: "-2.5rem", style: { transform: "translateX(-50%)" } },
-  { left: "85%", top: "72%", style: { transform: "translateX(-50%)" } },
-];
-
 export default function FlavorSearch() {
   const [query, setQuery] = useState("");
   const [currentQuery, setCurrentQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [explainLoading, setExplainLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResponse | null>(null);
-  const [searchError, setSearchError] = useState<SearchError | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [loading, searchResult, searchError, explanation]);
+  }, [loading, searchResult, explanation]);
 
   async function doSearch(q: string) {
     const trimmed = q.trim();
@@ -54,29 +43,20 @@ export default function FlavorSearch() {
     setQuery(trimmed);
     setCurrentQuery(trimmed);
     setSearchResult(null);
-    setSearchError(null);
     setExplanation(null);
     setLoading(true);
     try {
       const data = await searchIngredient(trimmed);
       setSearchResult(data);
     } catch (err: unknown) {
-      const e = err as SearchError & { status?: number };
-      if (e.status === 404) {
-        setSearchError({ error: e.error, query: e.query, message: e.message });
-      } else if (e.status === 429) {
-        setSearchError({
-          error: "Too many requests",
-          query: trimmed,
-          message: "Slow down — try again in a minute.",
-        });
-      } else {
-        setSearchError({
-          error: "Something went wrong",
-          query: trimmed,
-          message: e.message || "Please try again.",
-        });
-      }
+      const e = err as { status?: number; message?: string };
+      const message =
+        e.status === 404
+          ? "We don't have this ingredient in our database yet."
+          : e.status === 429
+            ? "Slow down — try again in a minute."
+            : e.message || "Something went wrong. Try again.";
+      setToast(message);
     } finally {
       setLoading(false);
     }
@@ -95,7 +75,7 @@ export default function FlavorSearch() {
       const data = await explainFlavorBridge(searchResult.query, searchResult.matches);
       setExplanation(data.explanation);
     } catch {
-      setExplanation("Couldn't load this time. Try again!");
+      setToast("Couldn't load this time. Try again!");
     } finally {
       setExplainLoading(false);
     }
@@ -105,7 +85,6 @@ export default function FlavorSearch() {
     setQuery("");
     setCurrentQuery("");
     setSearchResult(null);
-    setSearchError(null);
     setExplanation(null);
   }
 
@@ -114,29 +93,12 @@ export default function FlavorSearch() {
 
   return (
     <div className="relative mx-auto flex h-[560px] w-full max-w-2xl max-h-[calc(100vh-10rem)] flex-col overflow-visible">
-      {/* Desktop: floating bubbles around the chat card */}
-      {SUGGESTIONS.map((ingredient, i) => {
-        const pos = BUBBLE_POSITIONS[i] ?? BUBBLE_POSITIONS[0];
-        return (
-          <button
-            key={ingredient}
-            type="button"
-            onClick={() => !loading && doSearch(ingredient)}
-            disabled={loading}
-            className="animate-float absolute z-20 hidden rounded-2xl border-2 border-[#1db954]/50 bg-[#181818] px-3 py-2 text-center text-sm font-semibold text-[#1db954] shadow-lg transition hover:border-[#1db954] hover:bg-[#1db954]/20 hover:scale-110 hover:shadow-[#1db954]/20 disabled:opacity-50 lg:block"
-            style={{
-              left: "left" in pos ? pos.left : undefined,
-              right: "right" in pos ? pos.right : undefined,
-              top: pos.top,
-              animationDelay: `${i * 0.35}s`,
-              animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-              ...("style" in pos ? pos.style : {}),
-            }}
-          >
-            {ingredient}
-          </button>
-        );
-      })}
+      <SuggestionBubbles
+        suggestions={SUGGESTIONS}
+        loading={loading}
+        onSelect={doSearch}
+        variant="floating"
+      />
 
       {/* Chat card */}
       <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl bg-[#181818] shadow-2xl">
@@ -152,13 +114,6 @@ export default function FlavorSearch() {
               {loading && (
                 <Bubble type="app">
                   <p className="text-neutral-400">Finding your umami cousins…</p>
-                </Bubble>
-              )}
-
-              {searchError && (
-                <Bubble type="app">
-                  <p className="font-medium text-white">Oops! We don&apos;t have that one yet.</p>
-                  <p className="mt-1 text-sm text-neutral-400">{searchError.message}</p>
                 </Bubble>
               )}
 
@@ -236,24 +191,14 @@ export default function FlavorSearch() {
         </div>
       </div>
 
-      {/* Mobile only: bubbles below the chat */}
-      <div className="flex shrink-0 flex-wrap justify-center gap-2 pt-4 pb-1 lg:hidden">
-        {SUGGESTIONS.map((ingredient, i) => (
-          <button
-            key={ingredient}
-            type="button"
-            onClick={() => !loading && doSearch(ingredient)}
-            disabled={loading}
-            className="animate-float rounded-xl border-2 border-[#1db954]/50 bg-[#181818] px-2.5 py-1.5 text-xs font-semibold text-[#1db954] shadow-lg transition hover:border-[#1db954] hover:bg-[#1db954]/20 hover:scale-105 disabled:opacity-50"
-            style={{
-              animationDelay: `${i * 0.35}s`,
-              animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-            }}
-          >
-            {ingredient}
-          </button>
-        ))}
-      </div>
+      <SuggestionBubbles
+        suggestions={SUGGESTIONS}
+        loading={loading}
+        onSelect={doSearch}
+        variant="row"
+      />
+
+      {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }
