@@ -23,31 +23,48 @@ const SUGGESTIONS = [
   "Cherry tomato",
 ];
 
+type SearchState = {
+  query: string;
+  currentQuery: string;
+  loading: boolean;
+  explainLoading: boolean;
+  searchResult: SearchResponse | null;
+  explanation: string | null;
+  toastMessage: string | null;
+};
+
+const initialSearchState: SearchState = {
+  query: "",
+  currentQuery: "",
+  loading: false,
+  explainLoading: false,
+  searchResult: null,
+  explanation: null,
+  toastMessage: null,
+};
+
 export default function FlavorSearch() {
-  const [query, setQuery] = useState("");
-  const [currentQuery, setCurrentQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [explainLoading, setExplainLoading] = useState(false);
-  const [searchResult, setSearchResult] = useState<SearchResponse | null>(null);
-  const [explanation, setExplanation] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [state, setState] = useState<SearchState>(initialSearchState);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [loading, searchResult, explanation]);
+  }, [state.loading, state.searchResult, state.explanation]);
 
   async function doSearch(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
-    setQuery(trimmed);
-    setCurrentQuery(trimmed);
-    setSearchResult(null);
-    setExplanation(null);
-    setLoading(true);
+    setState((s) => ({
+      ...s,
+      query: trimmed,
+      currentQuery: trimmed,
+      searchResult: null,
+      explanation: null,
+      loading: true,
+    }));
     try {
       const data = await searchIngredient(trimmed);
-      setSearchResult(data);
+      setState((s) => ({ ...s, searchResult: data, loading: false }));
     } catch (err: unknown) {
       const e = err as { status?: number; message?: string };
       const message =
@@ -56,46 +73,51 @@ export default function FlavorSearch() {
           : e.status === 429
             ? "Slow down — try again in a minute."
             : e.message || "Something went wrong. Try again.";
-      setToastMessage(message);
-    } finally {
-      setLoading(false);
+      setState((s) => ({ ...s, loading: false, toastMessage: message }));
     }
   }
 
   function handleSearch(e: FormEvent) {
     e.preventDefault();
-    doSearch(query);
+    doSearch(state.query);
   }
 
   async function handleExplain() {
-    if (!searchResult?.matches?.length) return;
-    setExplainLoading(true);
-    setExplanation(null);
+    if (!state.searchResult?.matches?.length) return;
+    setState((s) => ({ ...s, explainLoading: true, explanation: null }));
     try {
-      const data = await explainFlavorBridge(searchResult.query, searchResult.matches);
-      setExplanation(data.explanation);
+      const data = await explainFlavorBridge(
+        state.searchResult.query,
+        state.searchResult.matches,
+      );
+      setState((s) => ({ ...s, explanation: data.explanation, explainLoading: false }));
     } catch {
-      setToastMessage("Couldn't load this time. Try again!");
-    } finally {
-      setExplainLoading(false);
+      setState((s) => ({
+        ...s,
+        explainLoading: false,
+        toastMessage: "Couldn't load this time. Try again!",
+      }));
     }
   }
 
   function tryAnother() {
-    setQuery("");
-    setCurrentQuery("");
-    setSearchResult(null);
-    setExplanation(null);
+    setState((s) => ({
+      ...s,
+      query: "",
+      currentQuery: "",
+      searchResult: null,
+      explanation: null,
+    }));
   }
 
-  const hasSearched = currentQuery.length > 0;
-  const showInput = !loading && !searchResult;
+  const hasSearched = state.currentQuery.length > 0;
+  const showInput = !state.loading && !state.searchResult;
 
   return (
     <div className="relative mx-auto flex h-[560px] w-full max-w-2xl max-h-[calc(100vh-10rem)] flex-col overflow-visible">
       <SuggestionBubbles
         suggestions={SUGGESTIONS}
-        loading={loading}
+        loading={state.loading}
         onSelect={doSearch}
         variant="floating"
       />
@@ -107,43 +129,43 @@ export default function FlavorSearch() {
             <div className="mx-auto w-full max-w-full space-y-4 break-words">
               {hasSearched && (
                 <Bubble type="user">
-                  <p className="font-semibold">{currentQuery}</p>
+                  <p className="font-semibold">{state.currentQuery}</p>
                 </Bubble>
               )}
 
-              {loading && (
+              {state.loading && (
                 <Bubble type="app">
                   <p className="text-neutral-400">Finding your umami cousins…</p>
                 </Bubble>
               )}
 
-              {searchResult && (
+              {state.searchResult && (
                 <Bubble type="app">
                   <p className="mb-3 font-semibold text-white">
-                    You found {searchResult.matches.length} umami cousins! 🎉
+                    You found {state.searchResult.matches.length} umami cousins! 🎉
                   </p>
                   <ul className="space-y-2">
-                    {searchResult.matches.map((m) => (
+                    {state.searchResult.matches.map((m) => (
                       <MatchPill key={m.id} match={m} />
                     ))}
                   </ul>
-                  {!explanation && (
+                  {!state.explanation && (
                     <button
                       type="button"
                       onClick={handleExplain}
-                      disabled={explainLoading}
+                      disabled={state.explainLoading}
                       className="mt-4 w-full rounded-xl bg-[#1db954] py-2.5 font-bold text-black transition hover:bg-[#1ed760] active:scale-[0.98] disabled:opacity-60"
                     >
-                      {explainLoading ? "Thinking…" : "Why do they taste similar? →"}
+                      {state.explainLoading ? "Thinking…" : "Why do they taste similar? →"}
                     </button>
                   )}
                 </Bubble>
               )}
 
-              {explanation && (
+              {state.explanation && (
                 <Bubble type="app">
                   <p className="mb-2 font-semibold text-[#1db954]">Here&apos;s the science 🧪</p>
-                  <p className="text-sm leading-relaxed text-neutral-300">{explanation}</p>
+                  <p className="text-sm leading-relaxed text-neutral-300">{state.explanation}</p>
                   <button
                     type="button"
                     onClick={tryAnother}
@@ -163,16 +185,16 @@ export default function FlavorSearch() {
               <form onSubmit={handleSearch} className="flex gap-2">
                 <input
                   type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={state.query}
+                  onChange={(e) => setState((s) => ({ ...s, query: e.target.value }))}
                   placeholder="Or type one…"
                   className="flex-1 rounded-xl border border-neutral-700 bg-[#282828] px-4 py-3 text-white placeholder-neutral-500 outline-none transition focus:border-[#1db954] focus:ring-2 focus:ring-[#1db954]/30"
                   style={{ caretColor: GREEN }}
-                  disabled={loading}
+                  disabled={state.loading}
                 />
                 <button
                   type="submit"
-                  disabled={loading || !query.trim()}
+                  disabled={state.loading || !state.query.trim()}
                   className="rounded-xl bg-[#1db954] px-5 py-3 font-bold text-black transition hover:bg-[#1ed760] active:scale-95 disabled:opacity-50"
                 >
                   Go
@@ -193,12 +215,17 @@ export default function FlavorSearch() {
 
       <SuggestionBubbles
         suggestions={SUGGESTIONS}
-        loading={loading}
+        loading={state.loading}
         onSelect={doSearch}
         variant="row"
       />
 
-      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
+      {state.toastMessage && (
+        <Toast
+          message={state.toastMessage}
+          onDismiss={() => setState((s) => ({ ...s, toastMessage: null }))}
+        />
+      )}
     </div>
   );
 }
