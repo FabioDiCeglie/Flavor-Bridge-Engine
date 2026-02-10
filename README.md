@@ -49,11 +49,13 @@ Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
 
 | | URL |
 |---|-----|
+| **App (frontend)** | https://flavor-bridge-engine.vercel.app |
 | **API** | https://flavor-bridge-engine.fabiodiceglie.workers.dev |
 | **Docs** | https://flavor-bridge-engine.fabiodiceglie.workers.dev/docs |
 
 ## 🛠️ Tech Stack
 
+- **Frontend**: Next.js (Vercel)
 - **Runtime**: Cloudflare Workers (Python)
 - **AI**: Workers AI (bge-small-en-v1.5 + llama-3.1-8b)
 - **Vector DB**: Cloudflare Vectorize
@@ -64,6 +66,13 @@ Cache status is returned via `X-Cache: HIT` or `X-Cache: MISS` header.
 ## 📁 Project Structure
 
 ```
+frontend/                 # Next.js app (deployed on Vercel)
+├── src/
+│   ├── app/              # Pages, layout, globals
+│   ├── components/       # FlavorSearch, SuggestionBubbles, Toast
+│   └── lib/              # API client (search, explain)
+└── package.json
+
 backend/
 ├── src/
 │   ├── routes/           # HTTP handlers (search, explain, seed, health, docs)
@@ -77,11 +86,19 @@ backend/
 
 ## 🧪 Quick Start
 
+**Backend (API):**
 ```bash
 cd backend
 npm install -g wrangler
 wrangler login
 npx wrangler dev          # http://localhost:8787
+```
+
+**Frontend (app):**
+```bash
+cd frontend
+npm install
+npm run dev               # http://localhost:3000 (set NEXT_PUBLIC_API_URL for local API)
 ```
 
 ## 🚢 CI/CD Pipeline
