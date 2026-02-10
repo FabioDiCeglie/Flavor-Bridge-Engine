@@ -30,7 +30,7 @@ A user searched for "{query}" and got these similar ingredients (they're good to
 
 Structure your answer exactly like this:
 
-1. What's the shared flavor? If it's umami, say: "Umami is that savory, mouth-filling depth (the fifth taste)." If it's something else (pungent, roasty, earthy), name it in a few words.
+1. First sentence (make it a full, rich 2 or 3 sentences): What's the shared flavor? If it's umami, explain it properly in one sentence — e.g. "Umami is that savory, mouth-filling depth we get from aged and fermented foods; it's often called the fifth taste alongside sweet, salty, sour, and bitter." If it's another quality (pungent, roasty, earthy), describe it in a full sentence, not just a few words.
 
 2. Optional: One very short tip (e.g. "Try swapping X for Y") only if it fits in one phrase.
 
