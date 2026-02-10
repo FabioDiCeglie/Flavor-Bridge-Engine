@@ -18,7 +18,6 @@ const SUGGESTIONS = [
   "Soy sauce",
   "Garlic",
   "Ginger",
-  "Kale",
   "Kombu",
   "Cherry tomato",
 ];
@@ -142,14 +141,14 @@ export default function FlavorSearch() {
               {state.searchResult && (
                 <Bubble type="app">
                   <p className="mb-3 font-semibold text-white">
-                    You found {state.searchResult.matches.length} umami cousins! 🎉
+                    Chemical cousins for &quot;{state.searchResult.query}&quot;
                   </p>
                   <ul className="space-y-2">
                     {state.searchResult.matches.map((m) => (
                       <MatchPill key={m.id} match={m} />
                     ))}
                   </ul>
-                  {!state.explanation && (
+                  {!state.explanation ? (
                     <button
                       type="button"
                       onClick={handleExplain}
@@ -157,6 +156,14 @@ export default function FlavorSearch() {
                       className="mt-4 w-full rounded-xl bg-[#1db954] py-2.5 font-bold text-black transition hover:bg-[#1ed760] active:scale-[0.98] disabled:opacity-60"
                     >
                       {state.explainLoading ? "Thinking…" : "Why do they taste similar? →"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={tryAnother}
+                      className="mt-4 text-sm font-semibold text-[#1db954] hover:underline"
+                    >
+                      Try another ingredient →
                     </button>
                   )}
                 </Bubble>
@@ -253,28 +260,12 @@ function Bubble({
 }
 
 function MatchPill({ match }: { match: SearchMatch }) {
-  const [open, setOpen] = useState(false);
-  const short =
-    match.description.length > 80
-      ? match.description.slice(0, 80).trim() + "…"
-      : match.description;
-
   return (
-    <button
-      type="button"
-      onClick={() => setOpen(!open)}
-      className="w-full rounded-xl bg-[#121212] p-3 text-left transition hover:bg-[#333]"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-white">{match.name}</span>
-        <span className="rounded-full bg-[#1db954]/25 px-2 py-0.5 text-xs font-semibold text-[#1db954]">
-          {(match.score * 100).toFixed(0)}%
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-neutral-500">{open ? match.description : short}</p>
-      {open && match.compounds && (
-        <p className="mt-2 text-xs text-neutral-600">Compounds: {match.compounds}</p>
-      )}
-    </button>
+    <div className="flex items-center justify-between gap-2 rounded-xl bg-[#121212] px-3 py-2.5">
+      <span className="font-medium text-white">{match.name}</span>
+      <span className="rounded-full bg-[#1db954]/25 px-2 py-0.5 text-xs font-semibold text-[#1db954]">
+        {(match.score * 100).toFixed(0)}%
+      </span>
+    </div>
   );
 }
