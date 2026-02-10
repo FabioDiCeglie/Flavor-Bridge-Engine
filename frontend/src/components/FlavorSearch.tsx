@@ -148,22 +148,14 @@ export default function FlavorSearch() {
                       <MatchPill key={m.id} match={m} />
                     ))}
                   </ul>
-                  {!state.explanation ? (
+                  {!state.explanation && (
                     <button
                       type="button"
                       onClick={handleExplain}
                       disabled={state.explainLoading}
-                      className="mt-4 w-full rounded-xl bg-[#1db954] py-2.5 font-bold text-black transition hover:bg-[#1ed760] active:scale-[0.98] disabled:opacity-60"
+                      className="mt-4 w-72 min-w-[200px] rounded-xl bg-[#1db954] py-2.5 font-bold text-black transition hover:bg-[#1ed760] active:scale-[0.98] disabled:opacity-60"
                     >
                       {state.explainLoading ? "Thinking…" : "Why do they taste similar? →"}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={tryAnother}
-                      className="mt-4 text-sm font-semibold text-[#1db954] hover:underline"
-                    >
-                      Try another ingredient →
                     </button>
                   )}
                 </Bubble>
@@ -173,13 +165,6 @@ export default function FlavorSearch() {
                 <Bubble type="app">
                   <p className="mb-2 font-semibold text-[#1db954]">Here&apos;s the science 🧪</p>
                   <p className="text-sm leading-relaxed text-neutral-300">{state.explanation}</p>
-                  <button
-                    type="button"
-                    onClick={tryAnother}
-                    className="mt-3 text-sm font-semibold text-[#1db954] hover:underline"
-                  >
-                    Try another ingredient →
-                  </button>
                 </Bubble>
               )}
 

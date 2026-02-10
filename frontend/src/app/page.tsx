@@ -9,6 +9,9 @@ export default function Home() {
           <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">
             I had to figure out how to represent &apos;Umami&apos; as a mathematical vector so an AI could understand that miso and parmesan share similar chemical properties.
           </p>
+          <p className="mt-4 text-sm leading-relaxed text-neutral-500">
+            Here we represent each ingredient&apos;s flavor as a vector; the AI compares them to find ingredients with similar chemical properties/compounds — that&apos;s why every search shows you chemical cousins.
+          </p>
         </aside>
 
         {/* Right: Chat */}
