@@ -10,7 +10,10 @@ export default function Home() {
             I had to figure out how to represent &apos;Umami&apos; as a mathematical vector so an AI could understand that miso and parmesan share similar chemical properties.
           </p>
           <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-            Here we represent each ingredient&apos;s flavor as a vector; the AI compares them to find ingredients with similar chemical properties/compounds — that&apos;s why every search shows you chemical cousins.
+            Here we represent each ingredient&apos;s flavor as a vector; the AI compares them to find ingredients with similar chemical properties — that&apos;s why every search shows you chemical cousins.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-neutral-500">
+            Pipeline: FooDB ingredients → embed to vectors → similarity search → chemical cousins.
           </p>
         </aside>
 
