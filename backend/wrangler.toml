@@ -37,7 +37,7 @@ id = "3cb20d2378d54435879058ee1825c4fc"
 # 📊 Observability
 # ============================================
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 # ============================================
@@ -64,7 +64,7 @@ binding = "CACHE"
 id = "3cb20d2378d54435879058ee1825c4fc"
 
 [env.staging.observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 # ============================================
@@ -91,5 +91,5 @@ binding = "CACHE"
 id = "3cb20d2378d54435879058ee1825c4fc"
 
 [env.production.observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
